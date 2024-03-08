@@ -1,30 +1,37 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-Future<Map<String, dynamic>> fetchWeatherData(
-    String apiKey, String city) async {
-  final response = await http.get(Uri.parse(
-      'https://api.openweathermap.org/data/2.5/weather?q=$city&appid=$apiKey'));
-  if (response.statusCode == 200) {
-    return json.decode(response.body);
-  } else {
-    throw Exception('Failed to fetch weather data: ${response.statusCode}');
+void main() async {
+  final apiUrl =
+      'https://api.open-meteo.com/v1/forecast?latitude=52&longitude=13&current=temperature_2m,wind_speed_10m&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m';
+
+  final customWeatherApiClient = CustomWeatherApiClient(apiUrl);
+
+  try {
+    final weatherData = await customWeatherApiClient.fetchCustomWeather();
+
+    final currentTemp = weatherData['current']['temperature_2m'];
+    final currentWind = weatherData['current']['wind_speed_10m'];
+
+    print('Temperature Right Now: $currentTemp°C');
+    print('Wind Speed Right Now: $currentWind m/s');
+  } catch (error) {
+    print('Error while retrieving weather data: $error');
   }
 }
 
-void main() async {
-  final apiKey = 'API_KEY';
-  final city = 'Addis Ababa';
+class CustomWeatherApiClient {
+  final String apiUrl;
 
-  try {
-    print('Fetching weather data for $city...');
-    final weatherData = await fetchWeatherData(apiKey, city);
-    final temperature =
-        (weatherData['main']['temp'] - 273.15).toStringAsFixed(2);
-    final description = weatherData['weather'][0]['description'];
-    print('Current temperature in $city: $temperature°C');
-    print('Weather conditions: $description');
-  } catch (e) {
-    print('Error fetching weather data: $e');
+  CustomWeatherApiClient(this.apiUrl);
+
+  Future<Map<String, dynamic>> fetchCustomWeather() async {
+    final response = await http.get(Uri.parse(apiUrl));
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to fetch custom weather data');
+    }
   }
 }
